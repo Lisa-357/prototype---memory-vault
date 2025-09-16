@@ -12,6 +12,7 @@ export interface TimeCapsule {
   title: string;
   message: string;
   media: MediaItem[];
+  photos?: string[]; // Keep for backward compatibility
   createdAt: string;
   unlockDate?: string;
   unlockLocation?: {
@@ -19,6 +20,7 @@ export interface TimeCapsule {
     longitude: number;
     name: string;
   };
+  location?: string; // Keep for backward compatibility
   isUnlocked: boolean;
   unlockedAt?: string;
   theme: 'default' | 'birthday' | 'anniversary' | 'graduation' | 'travel';

@@ -1,127 +1,121 @@
-import { TimeCapsule, CapsuleStatus } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
+import { TimeCapsule } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { CalendarIcon, MapPinIcon, ImageIcon, LockIcon, UnlockIcon } from 'lucide-react';
-import { format, isAfter } from 'date-fns';
+import {
+  CalendarIcon,
+  MapPinIcon,
+  LockIcon,
+  UnlockIcon,
+  ImageIcon
+} from 'lucide-react';
 
 interface TimeCapsuleCardProps {
   capsule: TimeCapsule;
-  onUnlock: (id: string) => void;
-  onView: (id: string) => void;
+  onTap: () => void;
 }
 
-export function TimeCapsuleCard({ capsule, onUnlock, onView }: TimeCapsuleCardProps) {
-  const getStatus = (): CapsuleStatus => {
-    if (capsule.isUnlocked) return 'unlocked';
-    if (capsule.unlockDate && isAfter(new Date(), new Date(capsule.unlockDate))) {
-      return 'ready';
+export const TimeCapsuleCard = ({ capsule, onTap }: TimeCapsuleCardProps) => {
+  const getStatusInfo = () => {
+    if (capsule.isUnlocked) {
+      return { status: 'unlocked', color: 'green', icon: UnlockIcon };
     }
-    return 'locked';
+    
+    if (capsule.unlockDate && new Date(capsule.unlockDate) <= new Date()) {
+      return { status: 'ready', color: 'amber', icon: LockIcon };
+    }
+    
+    return { status: 'locked', color: 'slate', icon: LockIcon };
   };
 
-  const status = getStatus();
-  const canUnlock = status === 'ready' && !capsule.isUnlocked;
-
-  const getThemeColors = () => {
-    switch (capsule.theme) {
-      case 'birthday':
-        return 'from-pink-50 to-purple-50 border-pink-200';
-      case 'anniversary':
-        return 'from-red-50 to-pink-50 border-red-200';
-      case 'graduation':
-        return 'from-blue-50 to-indigo-50 border-blue-200';
-      case 'travel':
-        return 'from-green-50 to-teal-50 border-green-200';
-      default:
-        return 'from-slate-50 to-gray-50 border-slate-200';
-    }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
   };
 
-  const getStatusBadge = () => {
-    switch (status) {
-      case 'unlocked':
-        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Unlocked</Badge>;
-      case 'ready':
-        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Ready to Open</Badge>;
-      case 'locked':
-        return <Badge className="bg-slate-100 text-slate-600 hover:bg-slate-100">Locked</Badge>;
-    }
-  };
+  const statusInfo = getStatusInfo();
+  const StatusIcon = statusInfo.icon;
 
   return (
-    <Card className={`bg-gradient-to-br ${getThemeColors()} shadow-sm hover:shadow-md transition-all duration-200 min-h-[200px] flex flex-col`}>
-      <CardContent className="p-6 flex flex-col h-full">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-lg leading-tight mb-2 text-slate-800 truncate">
-              {capsule.title}
-            </h3>
-            {getStatusBadge()}
-          </div>
-          <div className="ml-3 flex-shrink-0">
-            {capsule.isUnlocked ? (
-              <UnlockIcon className="h-5 w-5 text-green-600" />
-            ) : (
-              <LockIcon className="h-5 w-5 text-slate-400" />
-            )}
-          </div>
+    <div
+      onClick={onTap}
+      className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md active:scale-95 transition-all cursor-pointer min-h-[160px] flex flex-col"
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-slate-900 text-base leading-tight mb-1 truncate">
+            {capsule.title}
+          </h3>
+          <Badge className={`text-xs font-medium ${
+            statusInfo.color === 'green' ? 'bg-green-100 text-green-800 hover:bg-green-100' :
+            statusInfo.color === 'amber' ? 'bg-amber-100 text-amber-800 hover:bg-amber-100' :
+            'bg-slate-100 text-slate-800 hover:bg-slate-100'
+          }`}>
+            {statusInfo.status === 'unlocked' ? 'Unlocked' :
+             statusInfo.status === 'ready' ? 'Ready' : 'Locked'}
+          </Badge>
         </div>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ml-3 ${
+          statusInfo.color === 'green' ? 'bg-green-100' :
+          statusInfo.color === 'amber' ? 'bg-amber-100' : 'bg-slate-100'
+        }`}>
+          <StatusIcon className={`h-4 w-4 ${
+            statusInfo.color === 'green' ? 'text-green-600' :
+            statusInfo.color === 'amber' ? 'text-amber-600' : 'text-slate-600'
+          }`} />
+        </div>
+      </div>
 
-        <p className="text-slate-600 text-sm leading-relaxed mb-4 flex-1 line-clamp-3">
-          {capsule.message}
+      {/* Message Preview */}
+      {capsule.message && (
+        <p className="text-sm text-slate-600 leading-relaxed mb-3 flex-1 line-clamp-2">
+          {capsule.message.length > 80 
+            ? `${capsule.message.substring(0, 80)}...` 
+            : capsule.message}
         </p>
+      )}
 
-        <div className="space-y-2 mb-4">
-          {capsule.unlockDate && (
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <CalendarIcon className="h-3 w-3" />
-              <span>Opens {format(new Date(capsule.unlockDate), 'MMM d, yyyy')}</span>
-            </div>
-          )}
-          
-          {capsule.unlockLocation && (
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <MapPinIcon className="h-3 w-3" />
-              <span className="truncate">{capsule.unlockLocation.name}</span>
-            </div>
-          )}
-          
-          <div className="flex items-center gap-2 text-xs text-slate-500">
+      {/* Media Indicator */}
+      {capsule.photos && capsule.photos.length > 0 && (
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex -space-x-1">
+            {capsule.photos.slice(0, 3).map((photo, index) => (
+              <div key={index} className="w-6 h-6 rounded-full border-2 border-white overflow-hidden bg-slate-100">
+                <img
+                  src={photo}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center gap-1 text-xs text-slate-500">
             <ImageIcon className="h-3 w-3" />
-            <span>{capsule.media.length} {capsule.media.length === 1 ? 'item' : 'items'}</span>
+            <span>{capsule.photos.length}</span>
           </div>
         </div>
+      )}
 
-        <div className="flex gap-2 mt-auto">
-          {canUnlock && (
-            <Button 
-              onClick={() => onUnlock(capsule.id)}
-              className="flex-1 bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium min-h-[40px]"
-            >
-              Unlock Now
-            </Button>
-          )}
-          
-          {capsule.isUnlocked && (
-            <Button 
-              onClick={() => onView(capsule.id)}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-medium min-h-[40px]"
-            >
-              View Contents
-            </Button>
-          )}
-          
-          {status === 'locked' && (
-            <Button 
-              disabled
-              className="flex-1 bg-slate-200 text-slate-500 text-sm font-medium min-h-[40px] cursor-not-allowed"
-            >
-              Locked
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      {/* Footer */}
+      <div className="space-y-2 pt-2 border-t border-slate-100">
+        {capsule.unlockDate && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <CalendarIcon className="h-3 w-3" />
+            <span>
+              {capsule.isUnlocked ? 'Unlocked' : 'Unlocks'} {formatDate(capsule.unlockDate)}
+            </span>
+          </div>
+        )}
+        
+        {capsule.location && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <MapPinIcon className="h-3 w-3" />
+            <span className="truncate">{capsule.location}</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
-}
+};

@@ -1,29 +1,23 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TimeCapsule } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TimeCapsuleCard } from '@/components/custom/TimeCapsuleCard';
-import { CreateCapsuleModal } from '@/components/custom/CreateCapsuleModal';
-import { UnlockAnimation } from '@/components/custom/UnlockAnimation';
-import { CapsuleViewer } from '@/components/custom/CapsuleViewer';
-import { getAllTimeCapsules, unlockTimeCapsule } from '@/lib/storage';
+import { getAllTimeCapsules } from '@/lib/storage';
 import { useToast } from '@/hooks/use-toast';
 import {
   PlusIcon,
   ArchiveIcon,
-  SearchIcon,
-  BellIcon
+  SearchIcon
 } from 'lucide-react';
 
 const Gallery = () => {
+  const navigate = useNavigate();
   const [timeCapsules, setTimeCapsules] = useState<TimeCapsule[]>([]);
   const [filteredCapsules, setFilteredCapsules] = useState<TimeCapsule[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'locked' | 'ready' | 'unlocked'>('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showUnlockAnimation, setShowUnlockAnimation] = useState(false);
-  const [showCapsuleViewer, setShowCapsuleViewer] = useState(false);
-  const [selectedCapsule, setSelectedCapsule] = useState<TimeCapsule | null>(null);
   const { toast } = useToast();
 
   // Load data on mount
@@ -69,45 +63,8 @@ const Gallery = () => {
     }
   };
 
-  const handleUnlock = (capsuleId: string) => {
-    const capsule = timeCapsules.find(c => c.id === capsuleId);
-    if (capsule) {
-      setSelectedCapsule(capsule);
-      setShowUnlockAnimation(true);
-    }
-  };
-
-  const handleUnlockComplete = () => {
-    if (selectedCapsule) {
-      const response = unlockTimeCapsule(selectedCapsule.id);
-      if (response.success) {
-        loadTimeCapsules();
-        setShowUnlockAnimation(false);
-        setShowCapsuleViewer(true);
-        toast({
-          title: 'Time Capsule Unlocked!',
-          description: 'Your memories are now available to view.'
-        });
-      } else {
-        toast({
-          title: 'Unlock Failed',
-          description: response.message || 'Failed to unlock time capsule',
-          variant: 'destructive'
-        });
-      }
-    }
-  };
-
-  const handleView = (capsuleId: string) => {
-    const capsule = timeCapsules.find(c => c.id === capsuleId);
-    if (capsule) {
-      setSelectedCapsule(capsule);
-      setShowCapsuleViewer(true);
-    }
-  };
-
-  const handleCreateSuccess = () => {
-    loadTimeCapsules();
+  const handleCapsuleTap = (capsuleId: string) => {
+    navigate(`/capsule/${capsuleId}`);
   };
 
   const getStatusCounts = () => {
@@ -120,135 +77,140 @@ const Gallery = () => {
   const statusCounts = getStatusCounts();
 
   return (
-    <div className="pb-20">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200 px-4 py-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800 mb-2">Your Time Capsules</h1>
-              <p className="text-slate-600">Preserve your precious memories for the future</p>
-            </div>
-            <Button
-              onClick={() => setShowCreateModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <PlusIcon className="h-4 w-4 mr-2" />
-              Create
-            </Button>
-          </div>
+    <div className="pb-20 bg-slate-50 min-h-screen">
+      {/* Hero Section - iOS style */}
+      <div className="bg-gradient-to-b from-blue-50 to-white px-4 pt-6 pb-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <h1 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">Your Memories</h1>
+          <p className="text-slate-600 text-base mb-6">Preserve precious moments for the future</p>
+          
+          {/* Create Button - iOS style prominent CTA */}
+          <Button
+            onClick={() => navigate('/create')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 active:scale-95"
+            size="lg"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Create Time Capsule
+          </Button>
+        </div>
+      </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+      {/* Stats Cards - iOS Card style */}
+      <div className="px-4 -mt-4 mb-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 active:bg-slate-50 transition-colors">
               <div className="text-center">
-                <p className="text-2xl font-bold text-slate-800">{statusCounts.locked}</p>
-                <p className="text-sm text-slate-600">Locked</p>
+                <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <div className="w-3 h-3 bg-slate-400 rounded-full"></div>
+                </div>
+                <p className="text-2xl font-bold text-slate-900 mb-1">{statusCounts.locked}</p>
+                <p className="text-xs text-slate-600 font-medium">Locked</p>
               </div>
             </div>
             
-            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-amber-100 active:bg-amber-50 transition-colors">
               <div className="text-center">
-                <p className="text-2xl font-bold text-amber-800">{statusCounts.ready}</p>
-                <p className="text-sm text-amber-700">Ready</p>
+                <div className="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse"></div>
+                </div>
+                <p className="text-2xl font-bold text-amber-700 mb-1">{statusCounts.ready}</p>
+                <p className="text-xs text-amber-600 font-medium">Ready</p>
               </div>
             </div>
             
-            <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+            <div className="bg-white rounded-2xl p-4 shadow-sm border border-green-100 active:bg-green-50 transition-colors">
               <div className="text-center">
-                <p className="text-2xl font-bold text-green-800">{statusCounts.unlocked}</p>
-                <p className="text-sm text-green-700">Unlocked</p>
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+                <p className="text-2xl font-bold text-green-700 mb-1">{statusCounts.unlocked}</p>
+                <p className="text-xs text-green-600 font-medium">Unlocked</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Filters */}
-        <div className="bg-white border border-slate-200 p-4 rounded-lg mb-6">
-          <div className="flex flex-col gap-4">
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-              <Input
-                placeholder="Search your time capsules..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
+      {/* Search and Filters - iOS style */}
+      <div className="px-4 mb-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+            <div className="space-y-4">
+              {/* Search */}
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <Input
+                  placeholder="Search your memories..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 border-slate-200 rounded-xl bg-slate-50 focus:bg-white transition-colors"
+                />
+              </div>
+              
+              {/* Filter Pills - iOS style segmented control */}
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {(['all', 'locked', 'ready', 'unlocked'] as const).map((status) => (
+                  <Button
+                    key={status}
+                    variant={filterStatus === status ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setFilterStatus(status)}
+                    className={`capitalize whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all active:scale-95 ${
+                      filterStatus === status 
+                        ? 'bg-blue-600 text-white shadow-md' 
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50 active:bg-slate-100'
+                    }`}
+                  >
+                    {status === 'all' ? 'All' : status}
+                  </Button>
+                ))}
+              </div>
             </div>
-            
-            <div className="flex gap-2 overflow-x-auto">
-              {(['all', 'locked', 'ready', 'unlocked'] as const).map((status) => (
-                <Button
-                  key={status}
-                  variant={filterStatus === status ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setFilterStatus(status)}
-                  className="capitalize whitespace-nowrap"
-                >
-                  {status}
-                </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Capsules Grid - iOS style cards */}
+      <div className="px-4">
+        <div className="max-w-7xl mx-auto">
+          {filteredCapsules.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredCapsules.map((capsule) => (
+                <TimeCapsuleCard
+                  key={capsule.id}
+                  capsule={capsule}
+                  onTap={() => handleCapsuleTap(capsule.id)}
+                />
               ))}
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-16">
+              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ArchiveIcon className="h-8 w-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                {searchQuery || filterStatus !== 'all' ? 'No capsules found' : 'No memories yet'}
+              </h3>
+              <p className="text-slate-600 mb-8 max-w-sm mx-auto">
+                {searchQuery || filterStatus !== 'all'
+                  ? 'Try adjusting your search or filters to find what you\'re looking for'
+                  : 'Start preserving your precious moments by creating your first time capsule'}
+              </p>
+              {!searchQuery && filterStatus === 'all' && (
+                <Button
+                  onClick={() => navigate('/create')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold active:scale-95 transition-transform"
+                >
+                  <PlusIcon className="h-4 w-4 mr-2" />
+                  Create Your First Capsule
+                </Button>
+              )}
+            </div>
+          )}
         </div>
-
-        {/* Capsules Grid */}
-        {filteredCapsules.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCapsules.map((capsule) => (
-              <TimeCapsuleCard
-                key={capsule.id}
-                capsule={capsule}
-                onUnlock={handleUnlock}
-                onView={handleView}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <ArchiveIcon className="mx-auto h-12 w-12 text-slate-400 mb-4" />
-            <h3 className="text-lg font-medium text-slate-800 mb-2">
-              {searchQuery || filterStatus !== 'all' ? 'No capsules found' : 'No time capsules yet'}
-            </h3>
-            <p className="text-slate-600 mb-6">
-              {searchQuery || filterStatus !== 'all'
-                ? 'Try adjusting your search or filters'
-                : 'Create your first time capsule to preserve precious memories'}
-            </p>
-            {!searchQuery && filterStatus === 'all' && (
-              <Button
-                onClick={() => setShowCreateModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Create Your First Capsule
-              </Button>
-            )}
-          </div>
-        )}
       </div>
-
-      {/* Modals */}
-      <CreateCapsuleModal
-        open={showCreateModal}
-        onOpenChange={setShowCreateModal}
-        onSuccess={handleCreateSuccess}
-      />
-      
-      <UnlockAnimation
-        open={showUnlockAnimation}
-        capsule={selectedCapsule}
-        onComplete={handleUnlockComplete}
-      />
-      
-      <CapsuleViewer
-        open={showCapsuleViewer}
-        capsule={selectedCapsule}
-        onOpenChange={setShowCapsuleViewer}
-      />
     </div>
   );
 };

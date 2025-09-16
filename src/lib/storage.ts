@@ -55,6 +55,9 @@ export function getTimeCapsuleById(id: string): ApiResponse<TimeCapsule> {
   }
 }
 
+// Alias for backward compatibility
+export const getTimeCapsule = getTimeCapsuleById;
+
 export function saveTimeCapsule(capsule: TimeCapsule): ApiResponse<TimeCapsule> {
   try {
     const response = getAllTimeCapsules();
@@ -76,6 +79,20 @@ export function saveTimeCapsule(capsule: TimeCapsule): ApiResponse<TimeCapsule> 
   } catch (error) {
     console.error('Error saving time capsule:', error);
     return { success: false, data: null, message: 'Failed to save time capsule' };
+  }
+}
+
+export function createTimeCapsule(capsuleData: Omit<TimeCapsule, 'id'>): ApiResponse<TimeCapsule> {
+  try {
+    const newCapsule: TimeCapsule = {
+      ...capsuleData,
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
+    };
+    
+    return saveTimeCapsule(newCapsule);
+  } catch (error) {
+    console.error('Error creating time capsule:', error);
+    return { success: false, data: null, message: 'Failed to create time capsule' };
   }
 }
 
